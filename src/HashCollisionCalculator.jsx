@@ -9,7 +9,6 @@ export default function HashCollisionCalculator() {
   const [numHashesInput, setNumHashesInput] = useState("1000000");
   const [probability, setProbability] = useState(null);
   const [copiedField, setCopiedField] = useState(null);
-  const [isApproximate, setIsApproximate] = useState(false);
 
   function calculateProbability(bits, n) {
     const bigN = BigInt(n);
@@ -18,7 +17,6 @@ export default function HashCollisionCalculator() {
     if (bigN > k) return new Decimal(1);
 
     if (n <= 1e4) {
-      setIsApproximate(false);
       let p = new Decimal(1);
       const kDecimal = new Decimal(k.toString());
       for (let i = 0n; i < bigN; i++) {
@@ -27,7 +25,6 @@ export default function HashCollisionCalculator() {
       }
       return new Decimal(1).minus(p);
     } else {
-      setIsApproximate(true);
       const kNum = new Decimal(2).pow(bits);
       const pNoCollision = Decimal.exp(
         new Decimal(-n).mul(n - 1).div(new Decimal(2).mul(kNum))
@@ -87,7 +84,7 @@ export default function HashCollisionCalculator() {
       <h1 className="text-2xl font-bold mb-4">Hash Collision Probability</h1>
 
       <div>
-        <label>Hash Output Bit Length</label>
+        <label>Number of buckets</label>
         <div className="flex gap-2 items-center">
           <input
             className="block w-full border px-2 py-1 mb-4"
@@ -114,20 +111,21 @@ export default function HashCollisionCalculator() {
         </div>
       </div>
 
-      {probability !== null && (
-        <div>
-          <label>Collision Probability</label>
-          <div className="flex gap-2 items-center">
-            <input
-              className="block w-full border px-2 py-1 mb-4 bg-gray-100"
-              type="text"
-              value={`${isApproximate ? "≈ " : "= "}${formatProbability(probability)}`}
-              disabled
-            />
-            <CopyButton value={formatProbability(probability)} field="probability" />
-          </div>
+      <div>
+        <label>Collision Probability</label>
+        <div className="flex gap-2 items-center">
+          <input
+            className="block w-full border px-2 py-1 mb-4 bg-gray-100"
+            type="text"
+            value={probability !== null ? formatProbability(probability) : "0%"}
+            disabled
+          />
+          <CopyButton
+            value={probability !== null ? formatProbability(probability) : "0%"}
+            field="probability"
+          />
         </div>
-      )}
+      </div>
     </div>
   );
 }
