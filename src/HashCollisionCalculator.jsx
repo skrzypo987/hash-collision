@@ -1,30 +1,38 @@
 import { useState, useEffect } from "react";
 import { Copy } from "lucide-react";
+import Decimal from "decimal.js";
+
+Decimal.set({ precision: 50 });
 
 export default function HashCollisionCalculator() {
   const [bitLengthInput, setBitLengthInput] = useState("64");
   const [numHashesInput, setNumHashesInput] = useState("1000000");
   const [probability, setProbability] = useState(null);
   const [copiedField, setCopiedField] = useState(null);
+  const [isApproximate, setIsApproximate] = useState(false);
 
   function calculateProbability(bits, n) {
     const bigN = BigInt(n);
     const k = BigInt(2) ** BigInt(bits);
 
-    if (bigN > k) return 1;
+    if (bigN > k) return new Decimal(1);
 
-    if (n <= 1e6) {
-      let p = 1;
+    if (n <= 1e4) {
+      setIsApproximate(false);
+      let p = new Decimal(1);
+      const kDecimal = new Decimal(k.toString());
       for (let i = 0n; i < bigN; i++) {
-        const numerator = Number(k - i);
-        const denominator = Number(k);
-        p *= numerator / denominator;
+        const term = new Decimal((k - i).toString()).div(kDecimal);
+        p = p.mul(term);
       }
-      return 1 - p;
+      return new Decimal(1).minus(p);
     } else {
-      const kNum = Math.pow(2, bits);
-      const pNoCollision = Math.exp(-n * (n - 1) / (2 * kNum));
-      return 1 - pNoCollision;
+      setIsApproximate(true);
+      const kNum = new Decimal(2).pow(bits);
+      const pNoCollision = Decimal.exp(
+        new Decimal(-n).mul(n - 1).div(new Decimal(2).mul(kNum))
+      );
+      return new Decimal(1).minus(pNoCollision);
     }
   }
 
@@ -45,10 +53,10 @@ export default function HashCollisionCalculator() {
   };
 
   const formatProbability = (p) => {
-    if (p === 1) return "100%";
-    if (p === 0) return "0%";
-    if (p < 1e-6) return p.toExponential(2);
-    return parseFloat((p * 100).toFixed(6)) + "%";
+    if (!p) return "0%";
+    if (p.eq(1)) return "100%";
+    if (p.eq(0)) return "0%";
+    return p.lt("1e-6") ? p.toExponential(6) : p.mul(100).toFixed(10) + "%";
   };
 
   const copyToClipboard = (text, field) => {
@@ -113,7 +121,7 @@ export default function HashCollisionCalculator() {
             <input
               className="block w-full border px-2 py-1 mb-4 bg-gray-100"
               type="text"
-              value={formatProbability(probability)}
+              value={`${isApproximate ? "≈ " : "= "}${formatProbability(probability)}`}
               disabled
             />
             <CopyButton value={formatProbability(probability)} field="probability" />
