@@ -76,8 +76,14 @@ export default function HashCollisionCalculator() {
       </div>
 
       {probability !== null && (
-        <div className="mt-4 text-lg">
-          <strong>Collision Probability:</strong> {formatProbability(probability)}
+        <div>
+          <label>Collision Probability</label>
+          <input
+            className="block w-full border px-2 py-1 mb-4 bg-gray-100"
+            type="text"
+            value={formatProbability(probability)}
+            disabled
+          />
         </div>
       )}
     </div>
