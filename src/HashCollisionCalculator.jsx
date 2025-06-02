@@ -6,10 +6,24 @@ export default function HashCollisionCalculator() {
   const [probability, setProbability] = useState(null);
 
   function calculateProbability(bits, n) {
-    const k = Math.pow(2, bits);
-    if (n > k) return 1;
-    const pNoCollision = Math.exp(-n * (n - 1) / (2 * k));
-    return 1 - pNoCollision;
+    const bigN = BigInt(n);
+    const k = BigInt(2) ** BigInt(bits);
+
+    if (bigN > k) return 1;
+
+    if (n <= 1e6) {
+      let p = 1;
+      for (let i = 0n; i < bigN; i++) {
+        const numerator = Number(k - i);
+        const denominator = Number(k);
+        p *= numerator / denominator;
+      }
+      return 1 - p;
+    } else {
+      const kNum = Math.pow(2, bits);
+      const pNoCollision = Math.exp(-n * (n - 1) / (2 * kNum));
+      return 1 - pNoCollision;
+    }
   }
 
   useEffect(() => {
@@ -31,7 +45,8 @@ export default function HashCollisionCalculator() {
   const formatProbability = (p) => {
     if (p === 1) return "100%";
     if (p === 0) return "0%";
-    return p < 1e-6 ? p.toExponential(2) : (p * 100).toFixed(6) + "%";
+    if (p < 1e-6) return p.toExponential(2);
+    return parseFloat((p * 100).toFixed(6)) + "%";
   };
 
   return (
