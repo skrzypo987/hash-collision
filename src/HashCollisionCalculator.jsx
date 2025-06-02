@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
+import { Copy } from "lucide-react";
 
 export default function HashCollisionCalculator() {
   const [bitLengthInput, setBitLengthInput] = useState("64");
   const [numHashesInput, setNumHashesInput] = useState("1000000");
   const [probability, setProbability] = useState(null);
+  const [copiedField, setCopiedField] = useState(null);
 
   function calculateProbability(bits, n) {
     const bigN = BigInt(n);
@@ -49,41 +51,73 @@ export default function HashCollisionCalculator() {
     return parseFloat((p * 100).toFixed(6)) + "%";
   };
 
+  const copyToClipboard = (text, field) => {
+    navigator.clipboard.writeText(text);
+    setCopiedField(field);
+    setTimeout(() => setCopiedField(null), 1500);
+  };
+
+  const CopyButton = ({ value, field }) => (
+    <div className="relative">
+      <button
+        onClick={() => copyToClipboard(value, field)}
+        className="mb-4"
+        aria-label={`Copy ${field}`}
+      >
+        <Copy size={18} />
+      </button>
+      {copiedField === field && (
+        <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-xs bg-white px-2 py-1 border rounded shadow">
+          Copied
+        </span>
+      )}
+    </div>
+  );
+
   return (
     <div className="p-4 max-w-xl mx-auto">
       <h1 className="text-2xl font-bold mb-4">Hash Collision Probability</h1>
 
       <div>
         <label>Hash Output Bit Length</label>
-        <input
-          className="block w-full border px-2 py-1 mb-4"
-          type="text"
-          inputMode="numeric"
-          value={bitLengthInput}
-          onChange={(e) => handleNumericInput(e.target.value, setBitLengthInput)}
-        />
+        <div className="flex gap-2 items-center">
+          <input
+            className="block w-full border px-2 py-1 mb-4"
+            type="text"
+            inputMode="numeric"
+            value={bitLengthInput}
+            onChange={(e) => handleNumericInput(e.target.value, setBitLengthInput)}
+          />
+          <CopyButton value={bitLengthInput} field="bitLength" />
+        </div>
       </div>
 
       <div>
         <label>Number of Hashes</label>
-        <input
-          className="block w-full border px-2 py-1 mb-4"
-          type="text"
-          inputMode="numeric"
-          value={numHashesInput}
-          onChange={(e) => handleNumericInput(e.target.value, setNumHashesInput)}
-        />
+        <div className="flex gap-2 items-center">
+          <input
+            className="block w-full border px-2 py-1 mb-4"
+            type="text"
+            inputMode="numeric"
+            value={numHashesInput}
+            onChange={(e) => handleNumericInput(e.target.value, setNumHashesInput)}
+          />
+          <CopyButton value={numHashesInput} field="numHashes" />
+        </div>
       </div>
 
       {probability !== null && (
         <div>
           <label>Collision Probability</label>
-          <input
-            className="block w-full border px-2 py-1 mb-4 bg-gray-100"
-            type="text"
-            value={formatProbability(probability)}
-            disabled
-          />
+          <div className="flex gap-2 items-center">
+            <input
+              className="block w-full border px-2 py-1 mb-4 bg-gray-100"
+              type="text"
+              value={formatProbability(probability)}
+              disabled
+            />
+            <CopyButton value={formatProbability(probability)} field="probability" />
+          </div>
         </div>
       )}
     </div>
