@@ -5,44 +5,75 @@ import Decimal from "decimal.js";
 Decimal.set({ precision: 50 });
 
 export default function HashCollisionCalculator() {
-  const [bitLengthInput, setBitLengthInput] = useState("64");
+  const [bucketInput, setBucketInput] = useState("2");
+  const [bucketMode, setBucketMode] = useState("bits");
   const [numHashesInput, setNumHashesInput] = useState("1000000");
+  const [numHashesMode, setNumHashesMode] = useState("number");
   const [probability, setProbability] = useState(null);
   const [copiedField, setCopiedField] = useState(null);
 
-  function calculateProbability(bits, n) {
-    const bigN = BigInt(n);
-    const k = BigInt(2) ** BigInt(bits);
+  function calculateProbability(k, n) {
+    try {
+      const bigN = BigInt(n);
+      const bigK = BigInt(k);
 
-    if (bigN > k) return new Decimal(1);
+      if (bigN > bigK) return new Decimal(1);
 
-    if (n <= 1e4) {
-      let p = new Decimal(1);
-      const kDecimal = new Decimal(k.toString());
-      for (let i = 0n; i < bigN; i++) {
-        const term = new Decimal((k - i).toString()).div(kDecimal);
-        p = p.mul(term);
+      if (n <= 1e4) {
+        let p = new Decimal(1);
+        const kDecimal = new Decimal(bigK.toString());
+        for (let i = 0n; i < bigN; i++) {
+          const term = new Decimal((bigK - i).toString()).div(kDecimal);
+          p = p.mul(term);
+        }
+        return new Decimal(1).minus(p);
+      } else {
+        const kNum = new Decimal(bigK.toString());
+        const pNoCollision = Decimal.exp(
+          new Decimal(-n).mul(n - 1).div(new Decimal(2).mul(kNum))
+        );
+        return new Decimal(1).minus(pNoCollision);
       }
-      return new Decimal(1).minus(p);
-    } else {
-      const kNum = new Decimal(2).pow(bits);
-      const pNoCollision = Decimal.exp(
-        new Decimal(-n).mul(n - 1).div(new Decimal(2).mul(kNum))
-      );
-      return new Decimal(1).minus(pNoCollision);
+    } catch (error) {
+      console.error("Hash calculation error:", error);
+      return null;
     }
   }
 
   useEffect(() => {
-    const bits = parseInt(bitLengthInput);
-    const n = parseInt(numHashesInput);
-    if (!isNaN(bits) && bits > 0 && !isNaN(n) && n > 0) {
-      const prob = calculateProbability(bits, n);
+    let k;
+    if (bucketMode === "bits") {
+      const bits = parseInt(bucketInput);
+      if (isFinite(bits) && bits > 0) {
+        k = Math.pow(2, bits);
+      } else {
+        setProbability(null);
+        return;
+      }
+    } else {
+      k = parseInt(bucketInput);
+    }
+
+    let n;
+    if (numHashesMode === "bits") {
+      const bits = parseInt(numHashesInput);
+      if (isFinite(bits) && bits > 0) {
+        n = Math.pow(2, bits);
+      } else {
+        setProbability(null);
+        return;
+      }
+    } else {
+      n = parseInt(numHashesInput);
+    }
+
+    if (!isNaN(k) && k > 0 && !isNaN(n) && n > 0 && isFinite(k) && isFinite(n)) {
+      const prob = calculateProbability(k, n);
       setProbability(prob);
     } else {
       setProbability(null);
     }
-  }, [bitLengthInput, numHashesInput]);
+  }, [bucketInput, bucketMode, numHashesInput, numHashesMode]);
 
   const handleNumericInput = (value, setter) => {
     const numeric = value.replace(/\D/g, "").replace(/^0+(?!$)/, "");
@@ -79,21 +110,39 @@ export default function HashCollisionCalculator() {
     </div>
   );
 
+  const ModeTabs = ({ mode, setMode }) => (
+    <div className="flex gap-1 ml-2">
+      <button
+        className={`px-2 py-1 border rounded ${mode === "bits" ? "bg-gray-200" : ""}`}
+        onClick={() => setMode("bits")}
+      >
+        Bits
+      </button>
+      <button
+        className={`px-2 py-1 border rounded ${mode === "number" ? "bg-gray-200" : ""}`}
+        onClick={() => setMode("number")}
+      >
+        Number
+      </button>
+    </div>
+  );
+
   return (
     <div className="p-4 max-w-xl mx-auto">
       <h1 className="text-2xl font-bold mb-4">Hash Collision Probability</h1>
 
       <div>
-        <label>Number of buckets</label>
+        <label>Number of Buckets</label>
         <div className="flex gap-2 items-center">
           <input
             className="block w-full border px-2 py-1 mb-4"
             type="text"
             inputMode="numeric"
-            value={bitLengthInput}
-            onChange={(e) => handleNumericInput(e.target.value, setBitLengthInput)}
+            value={bucketInput}
+            onChange={(e) => handleNumericInput(e.target.value, setBucketInput)}
           />
-          <CopyButton value={bitLengthInput} field="bitLength" />
+          <ModeTabs mode={bucketMode} setMode={setBucketMode} />
+          <CopyButton value={bucketInput} field="buckets" />
         </div>
       </div>
 
@@ -107,6 +156,7 @@ export default function HashCollisionCalculator() {
             value={numHashesInput}
             onChange={(e) => handleNumericInput(e.target.value, setNumHashesInput)}
           />
+          <ModeTabs mode={numHashesMode} setMode={setNumHashesMode} />
           <CopyButton value={numHashesInput} field="numHashes" />
         </div>
       </div>
