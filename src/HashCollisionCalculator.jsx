@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Copy, Check } from "lucide-react";
 import Decimal from "decimal.js";
 
-Decimal.set({ precision: 50 });
+Decimal.set({ precision: 100 });
 
 export default function HashCollisionCalculator() {
   const [bucketInput, setBucketInput] = useState("2");
