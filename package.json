@@ -1,13 +1,17 @@
 {
-  "name": "hash-collision-app",
+  "name": "hash-collision",
   "version": "0.0.1",
+  "homepage": "https://skrzypo987.github.io/hash-collision",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist"
   },
   "dependencies": {
     "decimal.js": "^10.5.0",
+    "gh-pages": "^6.3.0",
     "lucide-react": "^0.511.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
