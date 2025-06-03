@@ -105,7 +105,7 @@ export default function HashCollisionCalculator() {
     </div>
   );
 
-  const ModeTabs = ({ mode, setMode }) => (
+  const ModeTabs = ({ mode, setMode, labels = { number: "Number" } }) => (
     <div className="flex gap-1 ml-2">
       <button
         className={`px-2 py-1 border rounded ${mode === "bits" ? "bg-gray-200" : ""}`}
@@ -117,7 +117,7 @@ export default function HashCollisionCalculator() {
         className={`px-2 py-1 border rounded ${mode === "number" ? "bg-gray-200" : ""}`}
         onClick={() => setMode("number")}
       >
-        Number
+        {labels.number}
       </button>
     </div>
   );
@@ -136,7 +136,7 @@ export default function HashCollisionCalculator() {
             value={bucketInput}
             onChange={(e) => handleNumericInput(e.target.value, setBucketInput)}
           />
-          <ModeTabs mode={bucketMode} setMode={setBucketMode} />
+          <ModeTabs mode={bucketMode} setMode={setBucketMode} labels={{ number: "Buckets" }} />
           <CopyButton value={bucketInput} field="buckets" />
         </div>
       </div>
@@ -151,7 +151,7 @@ export default function HashCollisionCalculator() {
             value={numHashesInput}
             onChange={(e) => handleNumericInput(e.target.value, setNumHashesInput)}
           />
-          <ModeTabs mode={numHashesMode} setMode={setNumHashesMode} />
+          <ModeTabs mode={numHashesMode} setMode={setNumHashesMode} labels={{ number: "Hashes" }} />
           <CopyButton value={numHashesInput} field="numHashes" />
         </div>
       </div>
