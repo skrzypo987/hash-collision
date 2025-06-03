@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Copy } from "lucide-react";
+import { Copy, Check } from "lucide-react";
 import Decimal from "decimal.js";
 
 Decimal.set({ precision: 50 });
@@ -100,13 +100,8 @@ export default function HashCollisionCalculator() {
         className="mb-4"
         aria-label={`Copy ${field}`}
       >
-        <Copy size={18} />
+        {copiedField === field ? <Check size={18} /> : <Copy size={18} />}
       </button>
-      {copiedField === field && (
-        <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-xs bg-white px-2 py-1 border rounded shadow">
-          Copied
-        </span>
-      )}
     </div>
   );
 
