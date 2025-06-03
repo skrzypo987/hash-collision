@@ -124,7 +124,7 @@ export default function HashCollisionCalculator() {
 
   return (
     <div className="p-4 max-w-xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Hash Collision Probability</h1>
+      <h1 className="text-2xl font-bold mb-4">High precision hash collision calculator</h1>
 
       <div>
         <label>Number of Buckets</label>
