@@ -2,15 +2,34 @@ import { useState, useEffect } from "react";
 import { Copy, Check, Settings } from "lucide-react";
 import Decimal from "decimal.js";
 
+function usePersistentState(key, defaultValue) {
+  const [state, setState] = useState(() => {
+    try {
+      const stored = localStorage.getItem(key);
+      return stored !== null ? JSON.parse(stored) : defaultValue;
+    } catch {
+      return defaultValue;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(key, JSON.stringify(state));
+    } catch {}
+  }, [key, state]);
+
+  return [state, setState];
+}
+
 export default function HashCollisionCalculator() {
-  const [bucketInput, setBucketInput] = useState("2");
-  const [bucketMode, setBucketMode] = useState("bits");
-  const [numHashesInput, setNumHashesInput] = useState("1000000");
-  const [numHashesMode, setNumHashesMode] = useState("number");
+  const [bucketInput, setBucketInput] = usePersistentState("bucketInput", "2");
+  const [bucketMode, setBucketMode] = usePersistentState("bucketMode", "bits");
+  const [numHashesInput, setNumHashesInput] = usePersistentState("numHashesInput", "1000000");
+  const [numHashesMode, setNumHashesMode] = usePersistentState("numHashesMode", "number");
+  const [precision, setPrecision] = usePersistentState("precision", 100);
+  const [showSettings, setShowSettings] = useState(false);
   const [probability, setProbability] = useState(null);
   const [copiedField, setCopiedField] = useState(null);
-  const [precision, setPrecision] = useState(100);
-  const [showSettings, setShowSettings] = useState(false);
 
   const precisionValid = precision > 0 && precision <= 9999;
 
