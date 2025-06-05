@@ -1,8 +1,6 @@
 import { useState, useEffect } from "react";
-import { Copy, Check } from "lucide-react";
+import { Copy, Check, Settings } from "lucide-react";
 import Decimal from "decimal.js";
-
-Decimal.set({ precision: 100 });
 
 export default function HashCollisionCalculator() {
   const [bucketInput, setBucketInput] = useState("2");
@@ -11,6 +9,16 @@ export default function HashCollisionCalculator() {
   const [numHashesMode, setNumHashesMode] = useState("number");
   const [probability, setProbability] = useState(null);
   const [copiedField, setCopiedField] = useState(null);
+  const [precision, setPrecision] = useState(100);
+  const [showSettings, setShowSettings] = useState(false);
+
+  const precisionValid = precision > 0 && precision <= 9999;
+
+  useEffect(() => {
+    if (precisionValid) {
+      Decimal.set({ precision });
+    }
+  }, [precision, precisionValid]);
 
   function calculateProbability(k, n) {
     try {
@@ -41,6 +49,11 @@ export default function HashCollisionCalculator() {
   }
 
   useEffect(() => {
+    if (!precisionValid) {
+      setProbability(null);
+      return;
+    }
+
     let k;
     if (bucketMode === "bits") {
       const bits = parseInt(bucketInput);
@@ -73,7 +86,7 @@ export default function HashCollisionCalculator() {
     } else {
       setProbability(null);
     }
-  }, [bucketInput, bucketMode, numHashesInput, numHashesMode]);
+  }, [bucketInput, bucketMode, numHashesInput, numHashesMode, precision, precisionValid]);
 
   const handleNumericInput = (value, setter) => {
     const numeric = value.replace(/\D/g, "").replace(/^0+(?!$)/, "");
@@ -123,8 +136,30 @@ export default function HashCollisionCalculator() {
   );
 
   return (
-    <div className="p-4 max-w-xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">High precision hash collision calculator</h1>
+    <div className="p-4 max-w-xl mx-auto relative">
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold">High precision hash collision calculator</h1>
+        <button onClick={() => setShowSettings(!showSettings)}>
+          <Settings size={20} />
+        </button>
+      </div>
+
+      {showSettings && (
+        <div className="border rounded p-2 mb-4 bg-gray-50">
+          <label className="block text-sm mb-1">Decimal Precision</label>
+          <input
+            type="text"
+            inputMode="numeric"
+            maxLength={4}
+            className={`border px-2 py-1 w-full ${!precisionValid ? "border-red-500 bg-red-100" : ""}`}
+            value={precision}
+            onChange={(e) => setPrecision(Number(e.target.value.replace(/\D/g, "")))}
+          />
+          {!precisionValid && (
+            <p className="text-red-500 text-sm mt-1">Precision must be between 1 and 9999</p>
+          )}
+        </div>
+      )}
 
       <div>
         <label>Number of Buckets</label>
