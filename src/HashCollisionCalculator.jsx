@@ -27,6 +27,7 @@ export default function HashCollisionCalculator() {
   const [numHashesInput, setNumHashesInput] = usePersistentState("numHashesInput", "1000000");
   const [numHashesMode, setNumHashesMode] = usePersistentState("numHashesMode", "number");
   const [precision, setPrecision] = usePersistentState("precision", 100);
+  const [cutoffThreshold, setCutoffThreshold] = usePersistentState("cutoffThreshold", 10000);
   const [showSettings, setShowSettings] = useState(false);
   const [probability, setProbability] = useState(null);
   const [copiedField, setCopiedField] = useState(null);
@@ -46,7 +47,7 @@ export default function HashCollisionCalculator() {
 
       if (bigN > bigK) return new Decimal(1);
 
-      if (n <= 1e4) {
+      if (n <= cutoffThreshold) {
         let p = new Decimal(1);
         const kDecimal = new Decimal(bigK.toString());
         for (let i = 0n; i < bigN; i++) {
@@ -105,7 +106,7 @@ export default function HashCollisionCalculator() {
     } else {
       setProbability(null);
     }
-  }, [bucketInput, bucketMode, numHashesInput, numHashesMode, precision, precisionValid]);
+  }, [bucketInput, bucketMode, numHashesInput, numHashesMode, precision, precisionValid, cutoffThreshold]);
 
   const handleNumericInput = (value, setter) => {
     const numeric = value.replace(/\D/g, "").replace(/^0+(?!$)/, "");
@@ -177,6 +178,13 @@ export default function HashCollisionCalculator() {
           {!precisionValid && (
             <p className="text-red-500 text-sm mt-1">Precision must be between 1 and 9999</p>
           )}
+          <label className="block text-sm mt-4 mb-1">Exact Calculation Cutoff (hash count)</label>
+          <input
+            type="text"
+            inputMode="numeric"
+            className="border px-2 py-1 w-full"
+            maxLength={7} value={cutoffThreshold} onChange={(e) => setCutoffThreshold(Number(e.target.value.replace(/\D/g, "")))}
+          />
         </div>
       )}
 
