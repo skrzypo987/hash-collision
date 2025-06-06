@@ -3,14 +3,15 @@ import { Copy, Check, Settings } from "lucide-react";
 import Decimal from "decimal.js";
 
 export default function HashCollisionCalculator() {
-  const [bucketInput, setBucketInput] = useState("2");
+  const [bucketInput, setBucketInput] = useState("64");
   const [bucketMode, setBucketMode] = useState("bits");
   const [numHashesInput, setNumHashesInput] = useState("1000000");
   const [numHashesMode, setNumHashesMode] = useState("number");
+  const [cutoffThreshold, setCutoffThreshold] = useState(10000);
+  const [showSettings, setShowSettings] = useState(false);
   const [probability, setProbability] = useState(null);
   const [copiedField, setCopiedField] = useState(null);
   const [precision, setPrecision] = useState(100);
-  const [showSettings, setShowSettings] = useState(false);
 
   const precisionValid = precision > 0 && precision <= 9999;
 
@@ -27,7 +28,7 @@ export default function HashCollisionCalculator() {
 
       if (bigN > bigK) return new Decimal(1);
 
-      if (n <= 1e4) {
+      if (n <= cutoffThreshold) {
         let p = new Decimal(1);
         const kDecimal = new Decimal(bigK.toString());
         for (let i = 0n; i < bigN; i++) {
@@ -86,7 +87,7 @@ export default function HashCollisionCalculator() {
     } else {
       setProbability(null);
     }
-  }, [bucketInput, bucketMode, numHashesInput, numHashesMode, precision, precisionValid]);
+  }, [bucketInput, bucketMode, numHashesInput, numHashesMode, precision, precisionValid, cutoffThreshold]);
 
   const handleNumericInput = (value, setter) => {
     const numeric = value.replace(/\D/g, "").replace(/^0+(?!$)/, "");
@@ -158,6 +159,13 @@ export default function HashCollisionCalculator() {
           {!precisionValid && (
             <p className="text-red-500 text-sm mt-1">Precision must be between 1 and 9999</p>
           )}
+          <label className="block text-sm mt-4 mb-1">Exact Calculation Cutoff (hash count)</label>
+          <input
+            type="text"
+            inputMode="numeric"
+            className="border px-2 py-1 w-full"
+            maxLength={7} value={cutoffThreshold} onChange={(e) => setCutoffThreshold(Number(e.target.value.replace(/\D/g, "")))}
+          />
         </div>
       )}
 
