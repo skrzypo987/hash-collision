@@ -152,6 +152,50 @@ function InfoModal({ onClose }) {
   );
 }
 
+function SettingsModal({ onClose, precision, setPrecision, precisionValid, cutoffThreshold, setCutoffThreshold }) {
+  const ref = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (ref.current && !ref.current.contains(e.target)) onClose();
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [onClose]);
+
+  return (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+      <div ref={ref} className="bg-white rounded-lg shadow-xl max-w-lg w-full p-6 relative">
+        <button onClick={onClose} className="absolute top-3 right-3 text-gray-400 hover:text-gray-600">
+          <X size={18} />
+        </button>
+        <h2 className="text-lg font-bold mb-4">Settings</h2>
+        <label className="block text-sm mb-1">Decimal Precision</label>
+        <input
+          type="text"
+          inputMode="numeric"
+          maxLength={4}
+          className={`border px-2 py-1 w-full ${!precisionValid ? "border-red-500 bg-red-100" : ""}`}
+          value={precision}
+          onChange={(e) => setPrecision(Number(e.target.value.replace(/\D/g, "")))}
+        />
+        {!precisionValid && (
+          <p className="text-red-500 text-sm mt-1">Precision must be between 1 and 9999</p>
+        )}
+        <label className="block text-sm mt-4 mb-1">Exact Calculation Cutoff (hash count)</label>
+        <input
+          type="text"
+          inputMode="numeric"
+          maxLength={7}
+          className="border px-2 py-1 w-full"
+          value={cutoffThreshold}
+          onChange={(e) => setCutoffThreshold(Number(e.target.value.replace(/\D/g, "")))}
+        />
+      </div>
+    </div>
+  );
+}
+
 export default function HashCollisionCalculator() {
   const [bucketInput, setBucketInput] = useState("64");
   const [bucketMode, setBucketMode] = useState("bits");
@@ -199,43 +243,27 @@ export default function HashCollisionCalculator() {
   return (
     <div className="p-4 max-w-xl mx-auto relative">
       {showInfo && <InfoModal onClose={() => setShowInfo(false)} />}
+      {showSettings && (
+        <SettingsModal
+          onClose={() => setShowSettings(false)}
+          precision={precision}
+          setPrecision={setPrecision}
+          precisionValid={precisionValid}
+          cutoffThreshold={cutoffThreshold}
+          setCutoffThreshold={setCutoffThreshold}
+        />
+      )}
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">High precision hash collision calculator</h1>
         <div className="flex gap-2 items-center">
           <button onClick={() => setShowInfo(true)} aria-label="About hash collision probability">
             <Info size={20} />
           </button>
-          <button onClick={() => setShowSettings(!showSettings)} aria-label="Settings">
+          <button onClick={() => setShowSettings(true)} aria-label="Settings">
             <Settings size={20} />
           </button>
         </div>
       </div>
-
-      {showSettings && (
-        <div className="border rounded p-2 mb-4 bg-gray-50">
-          <label className="block text-sm mb-1">Decimal Precision</label>
-          <input
-            type="text"
-            inputMode="numeric"
-            maxLength={4}
-            className={`border px-2 py-1 w-full ${!precisionValid ? "border-red-500 bg-red-100" : ""}`}
-            value={precision}
-            onChange={(e) => setPrecision(Number(e.target.value.replace(/\D/g, "")))}
-          />
-          {!precisionValid && (
-            <p className="text-red-500 text-sm mt-1">Precision must be between 1 and 9999</p>
-          )}
-          <label className="block text-sm mt-4 mb-1">Exact Calculation Cutoff (hash count)</label>
-          <input
-            type="text"
-            inputMode="numeric"
-            maxLength={7}
-            className="border px-2 py-1 w-full"
-            value={cutoffThreshold}
-            onChange={(e) => setCutoffThreshold(Number(e.target.value.replace(/\D/g, "")))}
-          />
-        </div>
-      )}
 
       <div>
         <label>Number of Buckets</label>
