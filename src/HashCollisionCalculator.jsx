@@ -2,33 +2,6 @@ import { useState, useEffect, useRef } from "react";
 import { Copy, Check, Settings, Info, X } from "lucide-react";
 import Decimal from "decimal.js";
 
-function calculateProbability(k, n, cutoffThreshold) {
-  try {
-    const bigN = BigInt(n);
-    const bigK = BigInt(k);
-
-    if (bigN > bigK) return new Decimal(1);
-
-    if (n <= cutoffThreshold) {
-      let p = new Decimal(1);
-      const kDecimal = new Decimal(bigK.toString());
-      for (let i = 0n; i < bigN; i++) {
-        p = p.mul(new Decimal((bigK - i).toString()).div(kDecimal));
-      }
-      return new Decimal(1).minus(p);
-    } else {
-      const kNum = new Decimal(bigK.toString());
-      const pNoCollision = Decimal.exp(
-        new Decimal(-n).mul(n - 1).div(new Decimal(2).mul(kNum))
-      );
-      return new Decimal(1).minus(pNoCollision);
-    }
-  } catch (error) {
-    console.error("Hash calculation error:", error);
-    return null;
-  }
-}
-
 function parseInput(value, mode) {
   if (mode === "bits") {
     const bits = parseInt(value);
@@ -77,6 +50,23 @@ function CopyButton({ value, field, copiedField, onCopy }) {
       >
         {copiedField === field ? <Check size={18} /> : <Copy size={18} />}
       </button>
+    </div>
+  );
+}
+
+function LoadingModal({ onStop }) {
+  return (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl p-8 flex flex-col items-center gap-5">
+        <div className="w-12 h-12 border-4 border-gray-200 border-t-gray-600 rounded-full animate-spin" />
+        <p className="text-sm font-medium text-gray-700">Calculating…</p>
+        <button
+          onClick={onStop}
+          className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-sm rounded"
+        >
+          Stop
+        </button>
+      </div>
     </div>
   );
 }
@@ -204,13 +194,31 @@ export default function HashCollisionCalculator() {
   const [cutoffThreshold, setCutoffThreshold] = useState(10000);
   const [showSettings, setShowSettings] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
+  const [showCalculating, setShowCalculating] = useState(false);
   const [probability, setProbability] = useState(null);
   const [copiedField, setCopiedField] = useState(null);
   const [precision, setPrecision] = useState(100);
 
+  const workerRef = useRef(null);
+  const timerRef = useRef(null);
+
   const precisionValid = precision > 0 && precision <= 9999;
 
+  const stopWorker = () => {
+    if (workerRef.current) {
+      workerRef.current.terminate();
+      workerRef.current = null;
+    }
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+    setShowCalculating(false);
+  };
+
   useEffect(() => {
+    stopWorker();
+
     if (!precisionValid) {
       setProbability(null);
       return;
@@ -221,11 +229,41 @@ export default function HashCollisionCalculator() {
     const k = parseInput(bucketInput, bucketMode);
     const n = parseInput(numHashesInput, numHashesMode);
 
-    if (k != null && n != null) {
-      setProbability(calculateProbability(k, n, cutoffThreshold));
-    } else {
+    if (k == null || n == null) {
       setProbability(null);
+      return;
     }
+
+    const worker = new Worker(new URL("./calcWorker.js", import.meta.url), { type: "module" });
+    workerRef.current = worker;
+
+    timerRef.current = setTimeout(() => setShowCalculating(true), 200);
+
+    worker.onmessage = (e) => {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+      setShowCalculating(false);
+      workerRef.current = null;
+      const { result } = e.data;
+      setProbability(result ? new Decimal(result) : null);
+      worker.terminate();
+    };
+
+    worker.onerror = () => {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+      setShowCalculating(false);
+      workerRef.current = null;
+      setProbability(null);
+      worker.terminate();
+    };
+
+    worker.postMessage({ k, n, cutoffThreshold, precision });
+
+    return () => {
+      worker.terminate();
+      clearTimeout(timerRef.current);
+    };
   }, [bucketInput, bucketMode, numHashesInput, numHashesMode, precision, cutoffThreshold]);
 
   const handleNumericInput = (value, setter) => {
@@ -242,6 +280,7 @@ export default function HashCollisionCalculator() {
 
   return (
     <div className="p-4 max-w-xl mx-auto relative">
+      {showCalculating && <LoadingModal onStop={() => { stopWorker(); setProbability(null); }} />}
       {showInfo && <InfoModal onClose={() => setShowInfo(false)} />}
       {showSettings && (
         <SettingsModal
